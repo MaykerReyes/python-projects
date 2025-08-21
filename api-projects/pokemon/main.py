@@ -1,26 +1,40 @@
+
 import requests
 
-base_url = "https://pokeapi.co/api/v2"
+BASE_URL = "https://pokeapi.co/api/v2"
 
 def get_pokemon_info(name):
     """Fetches data for a given Pokémon by name."""
-    url = f"{base_url}/pokemon/{name.lower()}"
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        pokemon_data = response.json()
-        return pokemon_data
-    else:
-        print(f"Failed to retrieve data {response.status_code}")
-        
-pokemon_name = "typhlosion"
-pokemon_info = get_pokemon_info(pokemon_name)
+    url = f"{BASE_URL}/pokemon/{name.lower()}"
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        print(f"Pokémon not found: {name}")
+    except requests.exceptions.RequestException as e:
+        print(f"Network error: {e}")
+    return None
 
-if pokemon_info:
-    print(f"Name: {pokemon_info['name'].capitalize()}")
-    print(f"Height: {pokemon_info['height']}")
-    print(f"Weight: {pokemon_info['weight']}")
+def display_pokemon_info(pokemon):
+    print(f"\nName: {pokemon['name'].capitalize()}")
+    print(f"Height: {pokemon['height']}")
+    print(f"Weight: {pokemon['weight']}")
     print("Types:")
-    for type_info in pokemon_info['types']:
-        print(f"- {type_info['type']['name'].capitalize()}")    
-    
+    for type_info in pokemon['types']:
+        print(f"  - {type_info['type']['name'].capitalize()}")
+    print("Abilities:")
+    for ability in pokemon['abilities']:
+        print(f"  - {ability['ability']['name'].replace('-', ' ').capitalize()}")
+
+def main():
+    name = input("Enter the name of a Pokémon: ").strip()
+    if not name:
+        print("No name entered.")
+        return
+    pokemon = get_pokemon_info(name)
+    if pokemon:
+        display_pokemon_info(pokemon)
+
+if __name__ == "__main__":
+    main()
